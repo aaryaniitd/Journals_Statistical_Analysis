@@ -28,10 +28,10 @@ def total_and_zeros(address):
     total = df_pubs.shape[0]
     return [address, total, zeroes, round(zeroes/total*100,2)]
 
-def address_prior_counts(start):
+def address_prior_counts(start, i1, i2):
     address_list = []
     for i in range(3,23):
-        for j in [1,4]:
+        for j in [i1,i2]:
             if i < 10:
                 cur = start + f'_200{i}_{j}'
             else:
