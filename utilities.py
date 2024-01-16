@@ -173,7 +173,14 @@ def dept_merger(ls, dept, mergers):
 from datetime import datetime
 
 def time_between_dates(date_str1, date_str2):
-    date_format = "%B %d, %Y"
+    dt = date_str1.split()
+    if len(dt) == 3:
+        date_format = "%B %d, %Y"
+    else:
+        if len(date_str1) == 6:
+            date_format = "%b-%y"
+        else:
+            date_format = "%B %Y"
     date1 = datetime.strptime(date_str1, date_format)
     date2 = datetime.strptime(date_str2, date_format)
     
@@ -205,7 +212,8 @@ def days_for_publication(duration_str):
 def received_accepted_time(start, i1, i2):
     for k in range(2003,2023):
         for j in range(i1,i2+1,3):
-            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'x.csv')
+            address = start+'_'+ str(k)+'_'+ str(j)+'x.csv'
+            df = pd.read_csv(address)
             if 'Received Date' and 'Accepted Date' in df.columns:
                 times = []
                 for i in range(df.shape[0]):               
@@ -220,7 +228,7 @@ def received_accepted_time(start, i1, i2):
                     times.append(time)
                 times = np.array(times)
                 df['Time Taken'] = times
-            df.to_csv(start+'_'+ str(k)+'_'+ str(j)+'x.csv')
+            df.to_csv(address)
 
 def departments_wise_time(start, i1, i2):
     departments_time = {}
