@@ -26,7 +26,7 @@ def total_and_zeros(address):
             pzpp.append(0)
     df['pzpp'] = pzpp
     df.to_csv(address+'.csv', index = False)
-    zeroes  = df_pubs.shape[0] - df_sum
+    zeroes  = df['pzpp'].sum()
     total = df_pubs.shape[0]
     return [address, total, zeroes, round(zeroes/total*100,2)]
 
@@ -260,26 +260,18 @@ def departments_wise_pzpp(start):
     departments_pzpp = {}
     for k in range(2003,2023):
         for j in [1,3,4,6]:
-            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'.csv')
+            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'x.csv')
             if 'Department' in df.columns:
-                deps = np.array(df['Department'])    
-                
-                if 'Author XX prior pubs (insert more columns if reqd)' in df.columns:
-                    df_pubs = df[['Author 1 prior pubs','Author 2 prior pubs','Author 3 prior pubs','Author 4 prior pubs','Author XX prior pubs (insert more columns if reqd)']]
-                elif 'Author XX prior pubs' in df.columns:
-                    df_pubs = df[['Author 1 prior pubs','Author 2 prior pubs','Author 3 prior pubs','Author 4 prior pubs','Author XX prior pubs']]
-                df_pubs.fillna(0,inplace = True)
-                df_pubs = df_pubs.astype(int) 
-                df_sum = df_pubs.sum(axis = 1)    
+                deps = np.array(df['Department'])      
+                pzpp = np.array(df['pzpp'])
                 for i in range(df.shape[0]):
-                    
-                    if df_sum[i] == 0:
+                    if pzpp[i] == 1:
                         if deps[i].strip().lower() in departments_pzpp:
                             departments_pzpp[deps[i].strip().lower()] += 1
                         else:
                             departments_pzpp[deps[i].strip().lower()] = 1
                     else:
-                        if deps[i] not in departments_pzpp:
+                        if deps[i].strip().lower() not in departments_pzpp:
                             departments_pzpp[deps[i].strip().lower()] = 0
     return departments_pzpp 
 
@@ -478,6 +470,7 @@ def department_pzpp(department, deps, address_list):
                     if int(pzpp[i]) == 1:
                         count += 1
         dep_pzpp_issue[address] = count
+        print()
     dep_pzpp_year = {}
     for i in range(0,total_issues,2):
         dep_pzpp_year[address_list[i][3:7]] = dep_pzpp_issue[address_list[i]] + dep_pzpp_issue[address_list[i+1]]
