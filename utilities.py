@@ -5,15 +5,17 @@ from IPython.display import display
 from scipy.interpolate import CubicSpline
 from scipy import interpolate
 from datetime import datetime
+import matplotlib
 
+total_issues = 80
 def total_and_zeros(address):
     df = pd.read_csv(address+'.csv')
-    
     if 'Author XX prior pubs (insert more columns if reqd)' in df.columns:
         df_pubs = df[['Author 1 prior pubs','Author 2 prior pubs','Author 3 prior pubs','Author 4 prior pubs','Author XX prior pubs (insert more columns if reqd)']]
     elif 'Author XX prior pubs' in df.columns:
         df_pubs = df[['Author 1 prior pubs','Author 2 prior pubs','Author 3 prior pubs','Author 4 prior pubs','Author XX prior pubs']]
     df_pubs.fillna(0,inplace = True)
+    df_pubs
     df_pubs = df_pubs.astype(int)
     df_sum = df_pubs.sum().sum()
     pzpp = []
@@ -28,10 +30,10 @@ def total_and_zeros(address):
     total = df_pubs.shape[0]
     return [address, total, zeroes, round(zeroes/total*100,2)]
 
-def address_prior_counts(start, i1, i2):
+def address_prior_counts(start):
     address_list = []
     for i in range(3,23):
-        for j in [i1,i2]:
+        for j in [1,3,4,6]:
             if i < 10:
                 cur = start + f'_200{i}_{j}'
             else:
@@ -51,16 +53,17 @@ def pzpp_vs_issue(prior_counts):
     zeroes = [prior_counts[i][2] for i in range(len(prior_counts))]
     names = [prior_counts[i][0] for i in range(len(prior_counts))]
     pers = [prior_counts[i][3] for i in range(len(prior_counts))]
+    matplotlib.rc('xtick', labelsize = 8)
     def addlabels(x,y):
         for i in range(len(x)):
             plt.text(i, y[i], y[i], ha = 'center')
-    plt.figure(figsize = (12,10))
+    plt.figure(figsize = (14,10))
     plt.xticks(rotation=90), plt.bar(names, zeroes, color = 'blueviolet')
     plt.title('No. of PZPP vs Issue'), plt.xlabel('Issue'), plt.ylabel('No. of PZPP')
     addlabels(names,zeroes)
     plt.show()
     
-    plt.figure(figsize = (12,10))
+    plt.figure(figsize = (14,10))
     plt.xticks(rotation=90), plt.bar(names, pers, color = 'blueviolet')
     plt.title('% of PZPP vs Issue'), plt.xlabel('Issue'), plt.ylabel('Percentage of PZPP')
     addlabels(names, pers)
@@ -70,16 +73,16 @@ def pzpp_vs_issue(prior_counts):
 
 def averages(prior_counts, zeroes, names, pers):
     tot_data_points = 0
-    for i in range(40):
+    for i in range(total_issues):
         tot_data_points += prior_counts[i][1]
     weighted_zero_avg = round(sum(zeroes)/tot_data_points*100,2)
-    unweighted_zero_avg = round(sum(pers)/40,2)
+    unweighted_zero_avg = round(sum(pers)/total_issues,2)
     print(f"% of PZPPs (Unweighted Avg): {unweighted_zero_avg}%")
     print(f"% of PZPPs (Weighted Avg): {weighted_zero_avg}%")    
     five_w, two_w, two_p = [], [], []
     f = [prior_counts[i][1] for i in range(len(prior_counts))]
     cnt,ttl = 0, 0
-    for i in range(40):
+    for i in range(total_issues):
         if i%10==9:
             cnt=cnt+zeroes[i]
             ttl= ttl+f[i]
@@ -89,7 +92,7 @@ def averages(prior_counts, zeroes, names, pers):
             cnt=cnt+zeroes[i]
             ttl= ttl+f[i]
     cnt, ttl = 0, 0
-    for i in range(40):
+    for i in range(total_issues):
         if i%4==3:
             cnt=cnt+zeroes[i]
             ttl= ttl+f[i]
@@ -99,33 +102,33 @@ def averages(prior_counts, zeroes, names, pers):
         else:
             cnt=cnt+zeroes[i]
             ttl= ttl+f[i]
-    tx = np.array([i for i in range(1,41,4)])
+    tx = np.array([i for i in range(1,total_issues+1,4)])
     ty = interpolate.interp1d(tx, np.array(two_w))
-    txx = np.arange(1,36,0.1)
+    txx = np.arange(1,total_issues-4,0.1)
     tyy = ty(txx)
     five_w = [weighted_zero_avg] + five_w + [weighted_zero_avg]
-    fx = np.array([i for i in range(-5,55,10)])
+    fx = np.array([i for i in range(-5,total_issues+10+5,10)])
     fy = interpolate.interp1d(fx, np.array(five_w))
-    fxx = np.arange(0,40,0.1)
+    fxx = np.arange(0,total_issues,0.1)
     fyy = fy(fxx)
     two_p  = [f[0]] + two_p + [f[-1]]
-    tpx = np.array([i for i in range(-3,45,4)])
+    tpx = np.array([i for i in range(-3,total_issues+5,4)])
     tpy = interpolate.interp1d(tpx, np.array(two_p))
-    tpxx = np.arange(0,40,0.1)
+    tpxx = np.arange(0,total_issues,0.1)
     tpyy = tpy(tpxx)
-    plt.figure(figsize = (12,8))
+    plt.figure(figsize = (14,8))
     plt.xticks(rotation = 90)
     plt.title('Total No. of Papers vs Issue')
     plt.xlabel('Issues'), plt.ylabel('No. of Papers')
     plt.plot(names, f, label = 'Issue Wise', color = 'blueviolet', linewidth = 1.5)
     plt.plot(tpxx, tpyy, label = 'Two year Average', color = 'black', linewidth = 2)
-    plt.xlim(-1,39), plt.legend()
+    plt.xlim(-1,total_issues-1), plt.legend()
     plt.show()
-    plt.figure(figsize = (12,8))
+    plt.figure(figsize = (14,8))
     plt.title('Temporal Evolution of PZPPs')
     plt.xticks(rotation = 90)
-    wl = [weighted_zero_avg for _ in range(40) ]
-    ul = [unweighted_zero_avg for _ in range(40)]
+    wl = [weighted_zero_avg for _ in range(total_issues) ]
+    ul = [unweighted_zero_avg for _ in range(total_issues)]
     plt.plot(names, pers, color = 'blueviolet', linewidth = 1)
     plt.plot(names, wl, linestyle = 'dashed', color = 'blue', label = 'Total Weighted Average')
     plt.plot(names, ul, linestyle = 'dotted', color = 'red', label = 'Total Unweighted Average')
@@ -136,11 +139,11 @@ def averages(prior_counts, zeroes, names, pers):
     plt.show()
 
 
-def departments_freq(start, i1, i2):
+def departments_freq(start):
     departments_freq = {}
     for k in range(2003,2023):
-        for j in range(i1,i2+1,3):
-            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'x.csv')
+        for j in [1,3,4,6]:
+            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'.csv')
             if 'Department' in df.columns:
                 deps = np.array(df['Department'])
                 for i in range(df.shape[0]):
@@ -209,15 +212,18 @@ def days_for_publication(duration_str):
             days += current_value * time_units[current_unit]
     return int(days)//7
 
-def received_accepted_time(start, i1, i2):
+def received_accepted_time(start):
     for k in range(2003,2023):
-        for j in range(i1,i2+1,3):
-            address = start+'_'+ str(k)+'_'+ str(j)+'x.csv'
+        for j in [1,3,4,6]:
+            print(k,j)
+            address = start+'_'+ str(k)+'_'+ str(j)+'.csv'
             df = pd.read_csv(address)
             if 'Received Date' and 'Accepted Date' in df.columns:
                 times = []
                 for i in range(df.shape[0]):               
                     time = time_between_dates(df['Received Date'][i], df['Accepted Date'][i])
+                    # if time < 0:
+                        # print(k,j)
                     times.append(time)
                 times = np.array(times)
                 df['Time Taken'] = times
@@ -225,15 +231,18 @@ def received_accepted_time(start, i1, i2):
                 times = []
                 for i in range(df.shape[0]):        
                     time = days_for_publication(df['Time with Authors'][i])
+                    # if time < 0:
+                        # print(k,j)
                     times.append(time)
                 times = np.array(times)
                 df['Time Taken'] = times
-            df.to_csv(address)
+            address = start+'_'+ str(k)+'_'+ str(j)+'x.csv'
+            df.to_csv(address, index = False)
 
-def departments_wise_time(start, i1, i2):
+def departments_wise_time(start):
     departments_time = {}
     for k in range(2003,2023):
-        for j in range(i1,i2+1,3):
+        for j in [1,3,4,6]:
             df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'x.csv')
             if 'Department' in df.columns:
                 deps = np.array(df['Department'])
@@ -247,11 +256,11 @@ def departments_wise_time(start, i1, i2):
                         departments_time[dep].append(time_taken[i])
     return departments_time
 
-def departments_wise_pzpp(start, i1, i2):
+def departments_wise_pzpp(start):
     departments_pzpp = {}
     for k in range(2003,2023):
-        for j in range(i1,i2+1,3):
-            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'x.csv')
+        for j in [1,3,4,6]:
+            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'.csv')
             if 'Department' in df.columns:
                 deps = np.array(df['Department'])    
                 
@@ -274,10 +283,10 @@ def departments_wise_pzpp(start, i1, i2):
                             departments_pzpp[deps[i].strip().lower()] = 0
     return departments_pzpp 
 
-def country(start, i1, i2):
+def country(start):
     for k in range(2003,2023):
-        for j in range(i1,i2+1,3):
-            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'x.csv')
+        for j in [1,3,4,6]:
+            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'.csv')
             if 'Author XX country of affiliation (insert more columns if reqd)' in df.columns:
                 df_pubs = df[['Author 1 country of affiliation','Author 2 country of affiliation','Author 3 country of affiliation','Author 4 country of affiliation','Author XX country of affiliation (insert more columns if reqd)']]
             elif 'Author XX country of affiliation' in df.columns:
@@ -294,15 +303,15 @@ def country(start, i1, i2):
                 else:
                     aff.append(0)
             df['affiliations'] = aff
-            df.to_csv(start+'_'+ str(k)+'_'+ str(j)+'x.csv') 
+            df.to_csv(start+'_'+ str(k)+'_'+ str(j)+'.csv') 
 
-def affiliation_pzpp(start,i1,i2):
+def affiliation_pzpp(start):
     issue_ap = []
     global_ap = {-1:0, 0: 0, 1:0}
     tot_aff = {-1:0, 0:0, 1:0}
     for k in range(2003,2023): 
-        for j in range(i1,i2+1,3):
-            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'x.csv')
+        for j in [1,3,4,6]:
+            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'.csv')
             ap = {-1: 0, 0: 0, 1:0}
             for i in range(df.shape[0]):
                 if df['pzpp'][i] == 1:
@@ -312,11 +321,11 @@ def affiliation_pzpp(start,i1,i2):
             issue_ap.append(ap)
     return global_ap, issue_ap, tot_aff
 
-def affiliation_dept(start, i1, i2):
+def affiliation_dept(start):
     departments_aff = {}
     for k in range(2003,2023):
-        for j in range(i1,i2+1,3):
-            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'x.csv')
+        for j in [1,3,4,6]:
+            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'.csv')
             if 'Department' in df.columns:
                 deps = np.array(df['Department'])
                 affs = np.array(df['affiliations'])
@@ -357,13 +366,13 @@ def dept_wise_affiliation(start, departments_aff):
     df = pd.DataFrame(np.array(aff_dept), columns = ['Department','-1 affiliation','0 affiliation','1 affiliation','total', '% of -1 aff' , '% of 0 aff' ,'% of 1 aff'])
     df.to_excel(start+'_dept_wise_aff.xlsx')
 
-def issue_wise_affiliation(start,i1,i2):
+def issue_wise_affiliation(start):
     aff_issue_wise = {}
     aff_issue = []
     aff_overall = {-1:0, 0: 0, 1:0}
     for k in range(2003,2023):
-        for j in range(i1,i2+1,3):
-            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'x.csv')
+        for j in [1,3,4,6]:
+            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'.csv')
             aff = {-1: 0, 0: 0, 1:0}
             for i in range(df.shape[0]):    
                 aff[int(df['affiliations'][i])] += 1
@@ -383,12 +392,12 @@ def issue_wise_affiliation(start,i1,i2):
     df = pd.DataFrame(np.array(aff_issue), columns = ['Issue','-1 affiliation','0 affiliation','1 affiliation','total', '% of -1 aff' , '% of 0 aff' ,'% of 1 aff'])
     df.to_excel(start+'_issue_wise_aff.xlsx')
 
-def year_wise_affiliation(start, i1, i2):
+def year_wise_affiliation(start):
     aff_year_wise={}
     aff_year = []
     for k in range(2003,2023):
-        for j in range(i1,i2+1,3):
-            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'x.csv')
+        for j in [1,3,4,6]:
+            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'.csv')
             aff = {-1: 0, 0: 0, 1:0}
             for i in range(df.shape[0]):    
                 aff[int(df['affiliations'][i])] += 1
@@ -408,11 +417,11 @@ def year_wise_affiliation(start, i1, i2):
     df.to_excel(start+'_year_wise_aff.xlsx')
 
 
-def zero_country(start, i1, i2):
+def zero_country(start):
     zero_country_address = []
     for k in range(2003,2023):
-        for j in range(i1,i2+1,3):
-            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'x.csv')
+        for j in [1,3,4,6]:
+            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'.csv')
             times = np.array(df['Time Taken'])
             aff = np.array(df['affiliations'])
             for i in range(df.shape[0]):
@@ -423,7 +432,7 @@ def zero_country(start, i1, i2):
 def department_total(department, deps, address_list):
     dep_issue = {}
     for address in address_list:
-        df = pd.read_csv(address+'x.csv')
+        df = pd.read_csv(address+'.csv')
         count = 0
         if 'Department' in df.columns:
             departments = np.array(df['Department'])
@@ -433,7 +442,7 @@ def department_total(department, deps, address_list):
                     count += 1
         dep_issue[address] = count
     dep_year = {}
-    for i in range(0,40,2):
+    for i in range(0,total_issues,2):
         dep_year[address_list[i][3:7]] = dep_issue[address_list[i]] + dep_issue[address_list[i+1]]
     x = list(dep_issue.keys())
     y = list(dep_issue.values())
@@ -458,7 +467,7 @@ def department_total(department, deps, address_list):
 def department_pzpp(department, deps, address_list):
     dep_pzpp_issue = {}
     for address in address_list:
-        df = pd.read_csv(address+'x.csv')
+        df = pd.read_csv(address+'.csv')
         count = 0
         if 'Department' in df.columns:
             departments = np.array(df['Department'])
@@ -470,7 +479,7 @@ def department_pzpp(department, deps, address_list):
                         count += 1
         dep_pzpp_issue[address] = count
     dep_pzpp_year = {}
-    for i in range(0,40,2):
+    for i in range(0,total_issues,2):
         dep_pzpp_year[address_list[i][3:7]] = dep_pzpp_issue[address_list[i]] + dep_pzpp_issue[address_list[i+1]]
     x = list(dep_pzpp_issue.keys())
     y = list(dep_pzpp_issue.values())
