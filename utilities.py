@@ -413,7 +413,7 @@ def zero_country(start):
     zero_country_address = []
     for k in range(2003,2023):
         for j in [1,3,4,6]:
-            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'.csv')
+            df = pd.read_csv(start+'_'+ str(k)+'_'+ str(j)+'x.csv')
             times = np.array(df['Time Taken'])
             aff = np.array(df['affiliations'])
             for i in range(df.shape[0]):
@@ -434,8 +434,8 @@ def department_total(department, deps, address_list):
                     count += 1
         dep_issue[address] = count
     dep_year = {}
-    for i in range(0,total_issues,2):
-        dep_year[address_list[i][3:7]] = dep_issue[address_list[i]] + dep_issue[address_list[i+1]]
+    for i in range(0, total_issues-3,4):
+        dep_year[str(2003+i//4)] = dep_issue[address_list[i]] + dep_issue[address_list[i+1]] + dep_issue[address_list[i+2]] + dep_issue[address_list[i+3]]
     x = list(dep_issue.keys())
     y = list(dep_issue.values())
     plt.figure(figsize = (10,8))
@@ -472,8 +472,8 @@ def department_pzpp(department, deps, address_list):
         dep_pzpp_issue[address] = count
         print()
     dep_pzpp_year = {}
-    for i in range(0,total_issues,2):
-        dep_pzpp_year[address_list[i][3:7]] = dep_pzpp_issue[address_list[i]] + dep_pzpp_issue[address_list[i+1]]
+    for i in range(0, total_issues-3,4):
+        dep_pzpp_year[str(2003+i//4)] = dep_pzpp_issue[address_list[i]] + dep_pzpp_issue[address_list[i+1]] + dep_pzpp_issue[address_list[i+2]] + dep_pzpp_issue[address_list[i+3]]
     x = list(dep_pzpp_issue.keys())
     y = list(dep_pzpp_issue.values())
     plt.figure(figsize = (10,8))
